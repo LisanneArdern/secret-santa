@@ -249,6 +249,16 @@ otp_expiry = 3600
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
+# Points at our own /auth/confirm page (token_hash + type as query params)
+# instead of GoTrue's hosted verify endpoint, which would otherwise consume
+# the token on a plain GET — an email security scanner pre-fetching the
+# link would sign the token in before the real user opens it. Our page
+# only calls supabase.auth.verifyOtp() when the user presses the confirm
+# button (SPEC.md edge case, AC-EDGE-09).
+[auth.email.template.magic_link]
+subject = "Your Santa Swap sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

@@ -18,10 +18,10 @@ export function createAdminClient(): SupabaseClient {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, noPersistAuth);
 }
 
-let testUserCounter = 0;
-
 export interface TestUser {
   userId: string;
+  email: string;
+  accessToken: string;
   /** Authenticated as this user — every assertion about RLS uses this. */
   client: SupabaseClient;
 }
@@ -29,16 +29,21 @@ export interface TestUser {
 /**
  * Creates a real auth.users row (via the admin API) and a client
  * authenticated as that user. Sign-in is by password rather than a magic
- * link purely to keep the RLS test setup simple — RLS only cares that the
- * resulting JWT's `sub` is the user's id, not how they signed in.
+ * link purely to keep most test setup simple — RLS only cares that the
+ * resulting JWT's `sub` is the user's id, not how they signed in. Pass an
+ * explicit `email` when a test needs to control it (e.g. matching an
+ * email-bound invitation).
  */
-export async function createTestUser(admin: SupabaseClient): Promise<TestUser> {
-  testUserCounter += 1;
-  const email = `rls-test-${Date.now()}-${testUserCounter}@example.com`;
+export async function createTestUser(admin: SupabaseClient, email?: string): Promise<TestUser> {
+  // crypto.randomUUID() rather than a counter: multiple test files run as
+  // separate parallel workers, so a per-module counter can collide across
+  // files and silently produce a duplicate email, which the public.users
+  // unique index then rejects deep inside GoTrue's own user-creation flow.
+  const resolvedEmail = email ?? `rls-test-${crypto.randomUUID()}@example.com`;
   const password = "Test-Password-123!";
 
   const { data, error } = await admin.auth.admin.createUser({
-    email,
+    email: resolvedEmail,
     password,
     email_confirm: true,
   });
@@ -47,10 +52,18 @@ export async function createTestUser(admin: SupabaseClient): Promise<TestUser> {
   }
 
   const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, noPersistAuth);
-  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
-  if (signInError) {
-    throw new Error(`createTestUser: failed to sign in — ${signInError.message}`);
+  const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+    email: resolvedEmail,
+    password,
+  });
+  if (signInError || !signInData.session) {
+    throw new Error(`createTestUser: failed to sign in — ${signInError?.message}`);
   }
 
-  return { userId: data.user.id, client };
+  return {
+    userId: data.user.id,
+    email: resolvedEmail,
+    accessToken: signInData.session.access_token,
+    client,
+  };
 }

@@ -2,16 +2,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function createRound(
   admin: SupabaseClient,
-  options: { organiserId: string; organiserParticipates?: boolean; currentDrawVersion?: number },
+  options: {
+    organiserId: string;
+    organiserParticipates?: boolean;
+    currentDrawVersion?: number;
+    state?: "draft" | "open" | "drawn" | "completed" | "archived" | "cancelled";
+  },
 ) {
   const { data, error } = await admin
     .from("rounds")
     .insert({
       organiser_id: options.organiserId,
-      name: "RLS spike round",
+      name: "Test round",
       signup_deadline: new Date(Date.now() + 86_400_000).toISOString(),
       organiser_participates: options.organiserParticipates ?? true,
-      state: "drawn",
+      state: options.state ?? "open",
       current_draw_version: options.currentDrawVersion ?? 1,
     })
     .select()
@@ -45,6 +50,31 @@ export async function createAssignment(
     .select()
     .single();
   if (error) throw new Error(`createAssignment: ${error.message}`);
+  return data;
+}
+
+export async function createInvitation(
+  admin: SupabaseClient,
+  options: {
+    roundId: string;
+    email?: string | null;
+    expiresInMs?: number;
+    revoked?: boolean;
+  },
+) {
+  const now = Date.now();
+  const { data, error } = await admin
+    .from("invitations")
+    .insert({
+      round_id: options.roundId,
+      email: options.email ?? null,
+      token: `test-token-${crypto.randomUUID()}`,
+      expires_at: new Date(now + (options.expiresInMs ?? 86_400_000)).toISOString(),
+      revoked_at: options.revoked ? new Date(now).toISOString() : null,
+    })
+    .select()
+    .single();
+  if (error) throw new Error(`createInvitation: ${error.message}`);
   return data;
 }
 

@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 // SPEC.md key screens: "Sign in | Everyone | Email field, explanation of
-// the magic link | Send sign-in link".
-export default function SignInPage() {
-  const [email, setEmail] = useState("");
+// the magic link | Send sign-in link". `next` and `email` are set when
+// arriving here from the Invite page, so a link invite's "Sign in to
+// join" button can pre-fill the address and land back on the same invite
+// after confirming (see join-round-button.tsx and auth/confirm/page.tsx).
+function SignInForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
+
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -25,7 +32,7 @@ export default function SignInPage() {
     const supabase = getSupabaseBrowserClient();
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: `${window.location.origin}${next}` },
     });
 
     if (error) {
@@ -79,5 +86,13 @@ export default function SignInPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInForm />
+    </Suspense>
   );
 }

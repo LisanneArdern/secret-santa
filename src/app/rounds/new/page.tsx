@@ -100,7 +100,7 @@ export default function CreateRoundPage() {
   return (
     <main className="page">
       <h1>Create a round</h1>
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate className="card-form">
         <fieldset>
           <legend>Basics</legend>
           <div className="field">
@@ -164,26 +164,22 @@ export default function CreateRoundPage() {
 
         <fieldset>
           <legend>Participation</legend>
-          <div className="field">
-            <label>
-              <input
-                type="checkbox"
-                checked={wishesRequired}
-                onChange={(e) => setWishesRequired(e.target.checked)}
-              />{" "}
-              Require everyone to add wishes before drawing
-            </label>
-          </div>
-          <div className="field">
-            <label>
-              <input
-                type="checkbox"
-                checked={organiserParticipates}
-                onChange={(e) => setOrganiserParticipates(e.target.checked)}
-              />{" "}
-              I&apos;m taking part too
-            </label>
-          </div>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={wishesRequired}
+              onChange={(e) => setWishesRequired(e.target.checked)}
+            />
+            Require everyone to add wishes before drawing
+          </label>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={organiserParticipates}
+              onChange={(e) => setOrganiserParticipates(e.target.checked)}
+            />
+            I&apos;m taking part too
+          </label>
         </fieldset>
 
         {status === "error" && errorMessage && (

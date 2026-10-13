@@ -221,7 +221,8 @@ function RoundPageContent() {
               <ul>
                 {invitations.map((invite) => (
                   <li key={invite.id}>
-                    {invite.email ?? "Link invite"} — {invite.status}{" "}
+                    <span>{invite.email ?? "Link invite"}</span>
+                    <span className="badge">{invite.status}</span>
                     <a href={`/invite/${invite.token}`} target="_blank" rel="noopener noreferrer">
                       open invite link
                     </a>

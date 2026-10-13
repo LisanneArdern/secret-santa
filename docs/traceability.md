@@ -21,9 +21,9 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-PRIV-01 | A participant's API requests can only return their own assignment; requesting another returns 403 or 404. | `rls.test.ts` "[AC-PRIV-01,03] a giver sees only their own current assignment..." |
+| AC-PRIV-01 | A participant's API requests can only return their own assignment; requesting another returns 403 or 404. | `rls.test.ts` "[AC-PRIV-01,03] a giver sees only their own current assignment..."; `round-my-giftee.test.ts` "[AC-PRIV-01,03] shows a participant only their own giftee's name, wishes and notes" |
 | AC-PRIV-02 | A participating organiser cannot see any assignment but their own, in UI or API. | `rls.test.ts` "[AC-PRIV-02] a participating organiser sees only their own assignment..." |
-| AC-PRIV-03 | Nobody can find out who drew them. | `rls.test.ts` "[AC-PRIV-01,03] a giver sees only their own current assignment..." |
+| AC-PRIV-03 | Nobody can find out who drew them. | `rls.test.ts` "[AC-PRIV-01,03] a giver sees only their own current assignment..."; `round-my-giftee.test.ts` "[AC-PRIV-03] the response never names or implies who the caller's own giver is" |
 | AC-PRIV-04 | A participant's wishes and notes are only returned to them and to their giver, never to other participants or the organiser. | `rls.test.ts` "[AC-PRIV-04] wishes are visible to their owner and their current giver..." |
 | AC-EDGE-11 | A user in two rounds only ever sees the giftee that belongs to the round they are viewing. | `rls.test.ts` "[AC-EDGE-11] a user who is a giver in two rounds only sees each round's own giftee" |
 

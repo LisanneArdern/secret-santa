@@ -67,9 +67,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Phase 2 adds a local Supabase instance here (`supabase start`)
-      # once supabase/config.toml and the schema/RLS migrations exist.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
       - run: npm run test:integration
+      - if: ${{ !cancelled() }}
+        run: supabase stop
 
   e2e-and-a11y:
     needs: integration

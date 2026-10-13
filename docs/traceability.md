@@ -31,15 +31,15 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-INV-01 | A valid invite link lets a signed-in user join the round directly, without approval. | |
-| AC-INV-02 | A revoked or expired invite link cannot be used to join. | |
-| AC-INV-03 | An email invite can only be accepted by that email address. | |
-| AC-INV-04 | A magic link works once and expires after a short window. | |
-| AC-INV-05 | Only the organiser can create, edit or delete exclusions. | |
-| AC-INV-06 | The organiser can remove any participant until the round is completed; the removed person is notified. | |
-| AC-EDGE-01 | Inviting an already invited email, or joining a round twice, never creates a duplicate participant. | |
-| AC-EDGE-09 | Fetching a magic link URL without pressing confirm does not use up the token. | |
-| AC-EDGE-10 | An organiser with an open or drawn round cannot delete their account. | |
+| AC-INV-01 | A valid invite link lets a signed-in user join the round directly, without approval. | `invitations-accept.test.ts` "[AC-INV-01] a link invite (no bound email) can be accepted by any signed-in user, directly" |
+| AC-INV-02 | A revoked or expired invite link cannot be used to join. | `invitations-accept.test.ts` "[AC-INV-02] a revoked invite cannot be used to join"; "...an expired invite..." |
+| AC-INV-03 | An email invite can only be accepted by that email address. | `invitations-accept.test.ts` "[AC-INV-03] an email invite is rejected for a different signed-in email"; `validate-acceptance.test.ts` "[AC-INV-03] rejects an email invite when the signed-in email doesn't match" |
+| AC-INV-04 | A magic link works once and expires after a short window. | `auth-confirm.test.ts` "[AC-INV-04] verifies a real magic link once, and rejects reuse" |
+| AC-INV-05 | Only the organiser can create, edit or delete exclusions. | `exclusions-rls.test.ts` "[AC-INV-05] a participant cannot create, read, or delete an exclusion" |
+| AC-INV-06 | The organiser can remove any participant until the round is completed; the removed person is notified. | RLS: `participants_update` policy (`20261013220000_phase3_participant_removal_window.sql`) — "removed person is notified" closes in Phase 6 (email) |
+| AC-EDGE-01 | Inviting an already invited email, or joining a round twice, never creates a duplicate participant. | `invitations-accept.test.ts` "[AC-EDGE-01] accepting the same invite twice doesn't create a duplicate participant" |
+| AC-EDGE-09 | Fetching a magic link URL without pressing confirm does not use up the token. | `auth-confirm.test.ts` "[AC-EDGE-09] exports no GET handler, so a plain link open can never consume the token" — full HTTP-level proof lands with Phase 8's e2e journeys once the confirm page (Phase 5) exists |
+| AC-EDGE-10 | An organiser with an open or drawn round cannot delete their account. | `account-deletion.test.ts` "[AC-EDGE-10] blocks deletion while organising an open round"; "...a drawn round, allows it once cancelled"; `validate-deletion.test.ts` |
 
 ## Phase 4 — API routes for round lifecycle & participation
 

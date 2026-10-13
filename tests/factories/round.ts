@@ -5,7 +5,7 @@ export async function createRound(
   options: {
     organiserId: string;
     organiserParticipates?: boolean;
-    currentDrawVersion?: number;
+    currentDrawVersion?: number | null;
     state?: "draft" | "open" | "drawn" | "completed" | "archived" | "cancelled";
   },
 ) {
@@ -17,7 +17,8 @@ export async function createRound(
       signup_deadline: new Date(Date.now() + 86_400_000).toISOString(),
       organiser_participates: options.organiserParticipates ?? true,
       state: options.state ?? "open",
-      current_draw_version: options.currentDrawVersion ?? 1,
+      current_draw_version:
+        options.currentDrawVersion !== undefined ? options.currentDrawVersion : 1,
     })
     .select()
     .single();

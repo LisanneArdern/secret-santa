@@ -45,13 +45,13 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-LIFE-01 | Settings cannot be changed after the draw. | |
-| AC-DRAW-08 | A redraw increments drawVersion and only the latest version is ever shown. | |
-| AC-DRAW-09 | Removing a participant after the draw triggers a full redraw for all remaining participants. | |
-| AC-EDGE-02 | Removing a participant also removes every exclusion that references them. | |
-| AC-EDGE-05 | Concurrent draw requests for one round produce exactly one set of assignments. | |
-| AC-EDGE-06 | A settings change submitted during a running draw is rejected. | |
-| AC-EDGE-12 | Removing a participant after the draw is blocked if fewer than 3 people would remain. | |
+| AC-LIFE-01 | Settings cannot be changed after the draw. | `round-settings.test.ts` "[AC-LIFE-01] rejects settings edits once the round has been drawn" |
+| AC-DRAW-08 | A redraw increments drawVersion and only the latest version is ever shown. | `round-draw.test.ts` "[AC-DRAW-08] a redraw increments drawVersion and the giver only ever sees the latest" |
+| AC-DRAW-09 | Removing a participant after the draw triggers a full redraw for all remaining participants. | `round-remove-participant.test.ts` "[AC-DRAW-09] removing a participant after the draw triggers a full redraw for everyone remaining" |
+| AC-EDGE-02 | Removing a participant also removes every exclusion that references them. | `round-remove-participant.test.ts` "[AC-EDGE-02] deletes exclusions referencing the removed participant" |
+| AC-EDGE-05 | Concurrent draw requests for one round produce exactly one set of assignments. | `round-draw.test.ts` "[AC-EDGE-05] concurrent draw requests produce exactly one set of assignments"; "...concurrent redraw requests also produce exactly one result" |
+| AC-EDGE-06 | A settings change submitted during a running draw is rejected. | `round-settings.test.ts` "[AC-EDGE-06] a settings edit racing a draw loses once the draw commits first" |
+| AC-EDGE-12 | Removing a participant after the draw is blocked if fewer than 3 people would remain. | `round-remove-participant.test.ts` "[AC-EDGE-12] blocks removal after the draw if fewer than 3 would remain" |
 
 ## Phase 5 — UI screens
 

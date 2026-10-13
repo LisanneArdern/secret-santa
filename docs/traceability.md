@@ -8,14 +8,14 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-DRAW-01 | For any group of 3 or more with a satisfiable exclusion set, every participant gives exactly once and receives exactly once. | |
-| AC-DRAW-02 | No participant is ever assigned to themselves. | |
-| AC-DRAW-03 | No assignment violates an exclusion. | |
-| AC-DRAW-04 | With an unsatisfiable exclusion set, no assignments are stored and the organiser sees which exclusions block the draw. | |
-| AC-DRAW-05 | With fewer than 3 ready participants, the draw is blocked with a clear message. | |
-| AC-DRAW-06 | When wishes are required, the draw is blocked while any joined participant has no wishes, and the organiser sees who is not ready. | |
-| AC-DRAW-07 | After the organiser removes the participants who are not ready, the draw can run. | |
-| AC-EDGE-03 | A round cannot be saved with a signup deadline in the past or after the exchange date. | |
+| AC-DRAW-01 | For any group of 3 or more with a satisfiable exclusion set, every participant gives exactly once and receives exactly once. | `draw.test.ts` "[AC-DRAW-01,02,03] assigns everyone exactly once..."; `draw.property.test.ts` "[AC-DRAW-01,02,03] holds the three invariants..." |
+| AC-DRAW-02 | No participant is ever assigned to themselves. | `draw.test.ts` "[AC-DRAW-01,02,03] assigns everyone exactly once..."; `draw.property.test.ts` "[AC-DRAW-01,02,03] holds the three invariants..." |
+| AC-DRAW-03 | No assignment violates an exclusion. | `draw.test.ts` "[AC-DRAW-03] never violates an exclusion..."; `draw.property.test.ts` "[AC-DRAW-01,02,03] holds the three invariants..." |
+| AC-DRAW-04 | With an unsatisfiable exclusion set, no assignments are stored and the organiser sees which exclusions block the draw. | `draw.test.ts` "[AC-DRAW-04] reports the blocking exclusions..." (both cases) |
+| AC-DRAW-05 | With fewer than 3 ready participants, the draw is blocked with a clear message. | `draw.test.ts` "[AC-DRAW-05] blocks the draw with fewer than 3 participants" |
+| AC-DRAW-06 | When wishes are required, the draw is blocked while any joined participant has no wishes, and the organiser sees who is not ready. | `readiness.test.ts` "[AC-DRAW-06] blocks when wishes are required..." |
+| AC-DRAW-07 | After the organiser removes the participants who are not ready, the draw can run. | `readiness.test.ts` "[AC-DRAW-07] the draw can run once every remaining participant is ready" |
+| AC-EDGE-03 | A round cannot be saved with a signup deadline in the past or after the exchange date. | `dates.test.ts` "[AC-EDGE-03] rejects a signup deadline in the past"; "...after the exchange date" |
 
 ## Phase 2 — Data model: Drizzle schema + RLS
 

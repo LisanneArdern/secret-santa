@@ -78,6 +78,15 @@ jobs:
   e2e-and-a11y:
     needs: integration
     runs-on: ubuntu-latest
+    # Pages that call the Supabase browser client on mount (to check for an
+    # existing session) need these set just so the client constructs
+    # without throwing — Next.js inlines NEXT_PUBLIC_* at build time, and
+    # Playwright's webServer triggers that build. No real Supabase needs to
+    # be running: a fresh browser context has nothing in localStorage, so
+    # getSession() resolves locally to "no session" without a network call.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

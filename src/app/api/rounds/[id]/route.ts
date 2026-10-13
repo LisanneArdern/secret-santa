@@ -14,6 +14,34 @@ const EDITABLE_FIELDS = [
   "organiser_participates",
 ] as const;
 
+// Fetches a round for its organiser or any of its participants — uses the
+// caller's own request-scoped client (not the admin client) so Phase 2's
+// rounds_select RLS policy is the actual access check, not a manual
+// organiser-or-participant query we'd have to keep in sync with it.
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id: roundId } = await params;
+
+  const requestClient = getRequestScopedSupabaseClient(request);
+  const user = requestClient ? await getAuthenticatedUser(requestClient) : null;
+  if (!requestClient || !user) {
+    return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  const { data: round, error } = await requestClient
+    .from("rounds")
+    .select("*")
+    .eq("id", roundId)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
+  if (!round) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+  return NextResponse.json({ round, isOrganiser: round.organiser_id === user.id });
+}
+
 // AC-LIFE-01: settings cannot be changed after the draw. The UPDATE's
 // `.in("state", ["draft", "open"])` is the enforcement — not just a
 // pre-check — so it can't race a draw that commits in between reading the

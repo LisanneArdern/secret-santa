@@ -10,14 +10,25 @@
  */
 :root {
   --color-primary: #1f5c45;
+  --color-primary-dark: #163f30;
   --color-accent: #b3263a;
   --color-highlight: #d4a64a;
   --color-background: #fbf8f3;
   --color-surface: #ffffff;
   --color-text: #1e1e1e;
+  --color-border: #e4ddcc;
 
   --max-content-width: 720px;
   --tap-target-min: 44px;
+
+  /* A single spacing scale, used everywhere instead of one-off values, so
+     rhythm stays consistent across screens and viewport widths. */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+
   color-scheme: light;
 }
 
@@ -80,22 +91,95 @@ select {
 }
 
 /*
- * Shared screen layout and form/button primitives — SPEC.md "Layout and
- * responsiveness": mobile first single column, content centred at a max
- * width of ~720px on larger screens, at least a 16px side gutter.
+ * Site header — SPEC.md "Navigation is minimal: a logo linking home and an
+ * account menu, no sidebar" plus a small festive touch ("a subtle
+ * snowflake or star pattern in the header").
+ */
+.site-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2);
+  background: var(--color-primary);
+  background-image: radial-gradient(
+    circle,
+    rgb(255 255 255 / 12%) 1px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+}
+
+.site-header__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--color-surface);
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-decoration: none;
+}
+
+/*
+ * Shared screen layout — SPEC.md "Layout and responsiveness": mobile first
+ * single column, content centred at a max width of ~720px on larger
+ * screens, at least a 16px side gutter. Vertical rhythm between a page's
+ * own sections comes from this one `gap`, not per-element margins, so it
+ * stays consistent everywhere `.page` is used.
  */
 .page {
   width: 100%;
   max-width: var(--max-content-width);
   margin-inline: auto;
-  padding: 24px 16px;
+  padding: var(--space-4) var(--space-2) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.page h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* A card: the spec's "Surface | White | Cards and forms" token, used for
+   any self-contained group of content/controls on a page. */
+.page section,
+.page form.card-form {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-3);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+fieldset {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+legend {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: var(--space-1);
+  padding: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 16px;
 }
 
 .field label {
@@ -104,7 +188,7 @@ select {
 
 .field input {
   padding: 0 12px;
-  border: 1px solid #c9c2b4;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface);
   color: var(--color-text);
@@ -114,6 +198,20 @@ select {
 .field input:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
+}
+
+/* A checkbox paired inline with its label, e.g. "Require wishes". */
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.checkbox-field input {
+  min-height: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
 }
 
 .error-text {
@@ -155,4 +253,54 @@ select {
   .btn-secondary {
     width: 100%;
   }
+}
+
+/* Settings summaries (round details, invite page). */
+.page dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+}
+
+.page dl > div {
+  display: contents;
+}
+
+.page dt {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+/* A list of people/invitations — each row reads as a small card rather
+   than a bare bullet list. */
+.page ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-background);
+  border-radius: 8px;
+}
+
+/* A small status marker — SPEC.md: "Red and green must never be the only
+   way to tell states apart", so text always carries the status, this is
+   decorative reinforcement only. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  font-size: 0.8em;
+  font-weight: 600;
+  background: var(--color-highlight);
+  color: var(--color-primary-dark);
 }

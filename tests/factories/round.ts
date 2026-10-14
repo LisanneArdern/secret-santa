@@ -7,6 +7,9 @@ export async function createRound(
     organiserParticipates?: boolean;
     currentDrawVersion?: number | null;
     state?: "draft" | "open" | "drawn" | "completed" | "archived" | "cancelled";
+    signupDeadline?: Date;
+    exchangeDate?: Date | null;
+    signupReminderSentAt?: Date | null;
   },
 ) {
   const { data, error } = await admin
@@ -14,7 +17,11 @@ export async function createRound(
     .insert({
       organiser_id: options.organiserId,
       name: "Test round",
-      signup_deadline: new Date(Date.now() + 86_400_000).toISOString(),
+      signup_deadline: (options.signupDeadline ?? new Date(Date.now() + 86_400_000)).toISOString(),
+      exchange_date: options.exchangeDate ? options.exchangeDate.toISOString() : null,
+      signup_reminder_sent_at: options.signupReminderSentAt
+        ? options.signupReminderSentAt.toISOString()
+        : null,
       organiser_participates: options.organiserParticipates ?? true,
       state: options.state ?? "open",
       current_draw_version:

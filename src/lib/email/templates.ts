@@ -88,6 +88,19 @@ export function wishesUpdatedEmail(options: { roundName: string; gifteeName: str
   };
 }
 
+export function signupReminderEmail(options: { roundName: string; daysLeft: number; inviteUrl: string }) {
+  const dayWord = options.daysLeft === 1 ? "day" : "days";
+  return {
+    subject: `${options.daysLeft} ${dayWord} left to join ${options.roundName}`,
+    html: renderEmail({
+      heading: "Signup closes soon",
+      bodyHtml: `<p>You haven't joined <strong>${escapeHtml(options.roundName)}</strong> yet, and signup closes in ${options.daysLeft} ${dayWord}.</p>`,
+      ctaText: "Join round",
+      ctaUrl: options.inviteUrl,
+    }),
+  };
+}
+
 export function baseUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000";
 }

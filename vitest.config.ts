@@ -53,6 +53,10 @@ export default defineConfig({
               "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
             SUPABASE_SERVICE_ROLE_KEY:
               "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+            // Only used to authorize the cron routes under
+            // src/app/api/cron/ — not a real secret, just needs to match
+            // what tests send as the bearer token.
+            CRON_SECRET: "test-cron-secret",
           },
         },
       },

@@ -71,8 +71,8 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-PRIV-05 | 60 days after the exchange date, all personal data of the round is deleted. | |
-| AC-EDGE-07 | Deadlines trigger at the same moment regardless of the viewer's timezone. | |
+| AC-PRIV-05 | 60 days after the exchange date, all personal data of the round is deleted. | `cron.test.ts` "[AC-PRIV-05] deletes all personal data of a round 60 days after its exchange date"; `scheduled-transitions.test.ts` "[AC-PRIV-05] is true once 60 days have passed" |
+| AC-EDGE-07 | Deadlines trigger at the same moment regardless of the viewer's timezone. | `scheduled-transitions.test.ts` "[AC-EDGE-07] triggers at the same instant regardless of what timezone `now` is interpreted in" |
 
 ## Phase 8 — E2E journeys, accessibility, CI hardening
 

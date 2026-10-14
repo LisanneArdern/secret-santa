@@ -8,6 +8,13 @@
       "when": 1791917748915,
       "tag": "0000_glorious_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791975633549,
+      "tag": "0001_abandoned_ares",
+      "breakpoints": true
     }
   ]
 }

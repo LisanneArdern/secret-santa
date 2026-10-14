@@ -69,6 +69,10 @@ export const rounds = pgTable("rounds", {
   // are never shown — only rows matching this value count (SPEC.md:
   // "drawVersion increments on each redraw; only the latest counts").
   currentDrawVersion: integer("current_draw_version"),
+  // Set once the signup-deadline-approaching reminder (SPEC.md
+  // Notifications) has gone out, so the daily cron job sends it exactly
+  // once per round rather than once per day inside the reminder window.
+  signupReminderSentAt: timestamp("signup_reminder_sent_at", { withTimezone: true }),
 });
 
 export const invitations = pgTable(

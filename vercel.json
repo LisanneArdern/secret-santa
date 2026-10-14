@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/cron/signup-reminders", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/complete-rounds", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/archive-rounds", "schedule": "0 6 * * *" }
+  ]
+}

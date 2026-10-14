@@ -64,6 +64,31 @@ describe("MyGifteePage", () => {
     expect(screen.queryByText(/drew|giver/i)).not.toBeInTheDocument();
   });
 
+  it("[AC-EDGE-04] renders HTML in wishes as literal text, never executed", async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        drawn: true,
+        round: {},
+        giftee: {
+          displayName: "Bob",
+          wishes: '<img src=x onerror="window.__xss=true">Socks please',
+          notes: "<script>window.__xss2=true</script>",
+        },
+      }),
+    });
+    render(<MyGifteePage />);
+
+    expect(await screen.findByText(/Socks please/)).toBeInTheDocument();
+    // The tags render as visible text, not as actual DOM elements — React
+    // escapes plain JSX text by default (no dangerouslySetInnerHTML is
+    // used anywhere in this component).
+    expect(document.querySelector("img")).toBeNull();
+    expect(document.querySelector("script")).toBeNull();
+    expect((window as unknown as { __xss?: boolean }).__xss).toBeUndefined();
+  });
+
   it("shows a plain message when the giftee hasn't added wishes", async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
     fetchMock.mockResolvedValue({

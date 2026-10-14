@@ -26,6 +26,13 @@ interface Invitation {
   expires_at: string;
 }
 
+interface MyParticipant {
+  id: string;
+  status: string;
+  wishes: string | null;
+  notes: string | null;
+}
+
 // SPEC.md key screens: "Round page (organiser) | Organiser | People and
 // their status (who is not ready highlighted), settings summary,
 // exclusions | Invite people / Draw names". Exclusions management and the
@@ -48,6 +55,12 @@ function RoundPageContent() {
 
   const [drawStatus, setDrawStatus] = useState<"idle" | "drawing" | "error">("idle");
   const [drawError, setDrawError] = useState<string | null>(null);
+
+  const [participant, setParticipant] = useState<MyParticipant | null>(null);
+  const [wishesInput, setWishesInput] = useState("");
+  const [notesInput, setNotesInput] = useState("");
+  const [wishesStatus, setWishesStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [wishesError, setWishesError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +92,11 @@ function RoundPageContent() {
       if (cancelled) return;
       setRound(body.round);
       setIsOrganiser(body.isOrganiser);
+      if (body.participant) {
+        setParticipant(body.participant);
+        setWishesInput(body.participant.wishes ?? "");
+        setNotesInput(body.participant.notes ?? "");
+      }
 
       if (body.isOrganiser) {
         const invitesResponse = await fetch(`/api/rounds/${roundId}/invitations`, {
@@ -159,6 +177,30 @@ function RoundPageContent() {
     setDrawStatus("idle");
   }
 
+  async function handleSaveWishes(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!accessToken) return;
+    setWishesStatus("saving");
+    setWishesError(null);
+
+    const response = await fetch(`/api/rounds/${roundId}/wishes`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ wishes: wishesInput, notes: notesInput }),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      setWishesStatus("error");
+      setWishesError(
+        body.error === "too_long" ? "That's too long — keep it under 2,000 characters." : "Couldn't save. Try again.",
+      );
+      return;
+    }
+
+    setWishesStatus("saved");
+  }
+
   if (loadError) {
     return (
       <main className="page">
@@ -211,6 +253,49 @@ function RoundPageContent() {
           </div>
         </dl>
       </section>
+
+      {participant && (round.state === "open" || round.state === "drawn") && (
+        <section>
+          <h2>My wishes</h2>
+          <form onSubmit={handleSaveWishes}>
+            <div className="field">
+              <label htmlFor="my-wishes">
+                What would you like? (visible only to your giver)
+              </label>
+              <textarea
+                id="my-wishes"
+                rows={4}
+                value={wishesInput}
+                onChange={(e) => {
+                  setWishesInput(e.target.value);
+                  setWishesStatus("idle");
+                }}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="my-notes">Sizes, allergies, things to avoid (optional)</label>
+              <textarea
+                id="my-notes"
+                rows={2}
+                value={notesInput}
+                onChange={(e) => {
+                  setNotesInput(e.target.value);
+                  setWishesStatus("idle");
+                }}
+              />
+            </div>
+            {wishesStatus === "error" && wishesError && (
+              <p className="error-text" role="alert">
+                {wishesError}
+              </p>
+            )}
+            {wishesStatus === "saved" && <p>Saved.</p>}
+            <button type="submit" className="btn-secondary" disabled={wishesStatus === "saving"}>
+              {wishesStatus === "saving" ? "Saving…" : "Save my wishes"}
+            </button>
+          </form>
+        </section>
+      )}
 
       {round.state === "drawn" && (
         <section>

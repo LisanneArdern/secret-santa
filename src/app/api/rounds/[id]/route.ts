@@ -39,7 +39,32 @@ export async function GET(
   if (error) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
   if (!round) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-  return NextResponse.json({ round, isOrganiser: round.organiser_id === user.id });
+  // The caller's own participant row and wishes, if they're a participant —
+  // RLS (participants_select, participant_wishes_select) is what actually
+  // restricts this to their own row; there's no separate check here.
+  const { data: myParticipant } = await requestClient
+    .from("participants")
+    .select("id, status, participant_wishes(wishes, notes)")
+    .eq("round_id", roundId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const wishesRow = Array.isArray(myParticipant?.participant_wishes)
+    ? myParticipant.participant_wishes[0]
+    : myParticipant?.participant_wishes;
+
+  return NextResponse.json({
+    round,
+    isOrganiser: round.organiser_id === user.id,
+    participant: myParticipant
+      ? {
+          id: myParticipant.id,
+          status: myParticipant.status,
+          wishes: wishesRow?.wishes ?? null,
+          notes: wishesRow?.notes ?? null,
+        }
+      : null,
+  });
 }
 
 // AC-LIFE-01: settings cannot be changed after the draw. The UPDATE's

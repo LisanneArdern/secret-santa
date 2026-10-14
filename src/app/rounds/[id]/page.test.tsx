@@ -126,6 +126,68 @@ describe("RoundPage", () => {
     expect(await screen.findByText("Names have been drawn.")).toBeInTheDocument();
   });
 
+  it("shows the wishes form pre-filled for a participant, and saves changes", async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+    mockFetchSequence({
+      "/api/rounds/round-1/invitations": { invitations: [] },
+      "/api/rounds/round-1": {
+        round: baseRound,
+        isOrganiser: false,
+        participant: { id: "p1", status: "joined", wishes: "Books", notes: "Size M" },
+      },
+    });
+    render(<RoundPage />);
+
+    const wishesField = await screen.findByLabelText(/What would you like/);
+    expect(wishesField).toHaveValue("Books");
+    expect(screen.getByLabelText(/Sizes, allergies/)).toHaveValue("Size M");
+
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
+    fireEvent.change(wishesField, { target: { value: "Board games" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save my wishes" }));
+
+    expect(await screen.findByText("Saved.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/rounds/round-1/wishes",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ wishes: "Board games", notes: "Size M" }),
+      }),
+    );
+  });
+
+  it("does not show the wishes form to a non-participating viewer", async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+    mockFetchSequence({
+      "/api/rounds/round-1/invitations": { invitations: [] },
+      "/api/rounds/round-1": { round: baseRound, isOrganiser: true, participant: null },
+    });
+    render(<RoundPage />);
+
+    await screen.findByRole("heading", { name: "Family Christmas" });
+    expect(screen.queryByText("My wishes")).not.toBeInTheDocument();
+  });
+
+  it("shows a plain-language error when saving wishes fails", async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+    mockFetchSequence({
+      "/api/rounds/round-1/invitations": { invitations: [] },
+      "/api/rounds/round-1": {
+        round: baseRound,
+        isOrganiser: false,
+        participant: { id: "p1", status: "joined", wishes: null, notes: null },
+      },
+    });
+    render(<RoundPage />);
+    const wishesField = await screen.findByLabelText(/What would you like/);
+
+    fetchMock.mockResolvedValueOnce({ ok: false, json: async () => ({ error: "too_long" }) });
+    fireEvent.change(wishesField, { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save my wishes" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("too long");
+  });
+
   it("shows a plain-language error when the draw is blocked", async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
     mockFetchSequence({

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as createRoute from "../../src/app/api/rounds/route";
 import * as detailRoute from "../../src/app/api/rounds/[id]/route";
 import { createAdminClient, createTestUser } from "../factories/supabase-clients";
-import { createRound } from "../factories/round";
+import { addParticipant, createRound, setWishes } from "../factories/round";
 
 function callCreate(body: unknown, accessToken?: string) {
   const headers: Record<string, string> = { "content-type": "application/json" };
@@ -135,6 +135,28 @@ describe("GET /api/rounds/[id]", () => {
     const body = await response.json();
     expect(body.round.id).toBe(round.id);
     expect(body.isOrganiser).toBe(true);
+  });
+
+  it("includes the caller's own participant row and wishes when they're a participant", async () => {
+    const admin = createAdminClient();
+    const organiser = await createTestUser(admin);
+    const round = await createRound(admin, { organiserId: organiser.userId, state: "open", currentDrawVersion: null });
+    const participant = await addParticipant(admin, round.id, organiser.userId);
+    await setWishes(admin, { participantId: participant.id, wishes: "Books" });
+
+    const response = await callGet(round.id, organiser.accessToken);
+    const body = await response.json();
+    expect(body.participant).toEqual({ id: participant.id, status: "joined", wishes: "Books", notes: null });
+  });
+
+  it("returns participant: null for an organiser who isn't a participant", async () => {
+    const admin = createAdminClient();
+    const organiser = await createTestUser(admin);
+    const round = await createRound(admin, { organiserId: organiser.userId, state: "open", currentDrawVersion: null });
+
+    const response = await callGet(round.id, organiser.accessToken);
+    const body = await response.json();
+    expect(body.participant).toBeNull();
   });
 
   it("[AC-PRIV] an outsider cannot read a round they aren't part of", async () => {

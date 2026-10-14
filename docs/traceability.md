@@ -63,9 +63,9 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-NOTIF-01 | After a successful draw or redraw, each participant receives exactly one email naming only their own giftee. | |
-| AC-NOTIF-02 | When a giftee edits wishes after the draw, only their giver is notified. | |
-| AC-EDGE-08 | A bounced invite is flagged to the organiser. | |
+| AC-NOTIF-01 | After a successful draw or redraw, each participant receives exactly one email naming only their own giftee. | `notifications.test.ts` "[AC-NOTIF-01] sends each participant exactly one draw email naming only their own giftee"; "...a redraw sends each remaining participant one email with their new giftee" |
+| AC-NOTIF-02 | When a giftee edits wishes after the draw, only their giver is notified. | `notifications.test.ts` "[AC-NOTIF-02] notifies only the current giver when their giftee updates wishes" |
+| AC-EDGE-08 | A bounced invite is flagged to the organiser. | `webhooks-resend.test.ts` "[AC-EDGE-08] marks a bounced invite's invitation as undeliverable" — surfaced to the organiser via the existing status badge on the round page's invitations list |
 
 ## Phase 7 — Scheduled jobs (Vercel Cron)
 

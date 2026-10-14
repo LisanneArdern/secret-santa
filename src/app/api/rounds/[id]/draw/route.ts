@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { performDraw } from "@/lib/draw-orchestration";
+import { sendDrawCompletionEmails } from "@/lib/email/send-draw-emails";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getAuthenticatedUser, getRequestScopedSupabaseClient } from "@/lib/supabase-request-client";
 
@@ -36,7 +37,7 @@ export async function POST(
   const admin = getSupabaseAdminClient();
   const { data: round, error: roundError } = await admin
     .from("rounds")
-    .select("id, organiser_id, state, current_draw_version, wishes_required")
+    .select("id, name, organiser_id, state, current_draw_version, wishes_required")
     .eq("id", roundId)
     .maybeSingle();
   if (roundError) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
@@ -89,6 +90,13 @@ export async function POST(
 
     return NextResponse.json(outcome, { status: outcome.kind === "not_ready" ? 409 : 422 });
   }
+
+  await sendDrawCompletionEmails(admin, {
+    roundId,
+    roundName: round.name,
+    drawVersion: nextVersion,
+    isRedraw: false,
+  });
 
   return NextResponse.json({ drawVersion: nextVersion, alreadyDrawn: false });
 }

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { MINIMUM_PARTICIPANTS } from "@/domain/draw/draw";
 import { canPerform, type RoundState } from "@/domain/round-lifecycle/state-machine";
 import { performDraw } from "@/lib/draw-orchestration";
+import { sendDrawCompletionEmails } from "@/lib/email/send-draw-emails";
+import { sendEmailSafely } from "@/lib/email/send-safely";
+import { removedFromRoundEmail } from "@/lib/email/templates";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getAuthenticatedUser, getRequestScopedSupabaseClient } from "@/lib/supabase-request-client";
 
@@ -27,7 +30,7 @@ export async function DELETE(
   const admin = getSupabaseAdminClient();
   const { data: round, error: roundError } = await admin
     .from("rounds")
-    .select("id, organiser_id, state, current_draw_version, wishes_required")
+    .select("id, name, organiser_id, state, current_draw_version, wishes_required")
     .eq("id", roundId)
     .maybeSingle();
   if (roundError) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
@@ -63,11 +66,26 @@ export async function DELETE(
     );
   }
 
-  const { error: removeError } = await admin
+  const { data: removedParticipant, error: removeError } = await admin
     .from("participants")
     .update({ status: "removed" })
-    .eq("id", participantId);
+    .eq("id", participantId)
+    .select("user_id")
+    .single();
   if (removeError) return NextResponse.json({ error: "remove_failed" }, { status: 500 });
+
+  // SPEC.md Notifications: "Removed from a round | The removed participant".
+  const { data: removedUser } = await admin
+    .from("users")
+    .select("email")
+    .eq("id", removedParticipant.user_id)
+    .maybeSingle();
+  if (removedUser?.email) {
+    await sendEmailSafely({
+      to: removedUser.email,
+      ...removedFromRoundEmail({ roundName: round.name }),
+    });
+  }
 
   // AC-EDGE-02
   await admin
@@ -95,6 +113,13 @@ export async function DELETE(
   if (versionError) {
     return NextResponse.json({ error: "version_update_failed" }, { status: 500 });
   }
+
+  await sendDrawCompletionEmails(admin, {
+    roundId,
+    roundName: round.name,
+    drawVersion: nextVersion,
+    isRedraw: true,
+  });
 
   return NextResponse.json({ ok: true, redrawn: true, drawVersion: nextVersion });
 }

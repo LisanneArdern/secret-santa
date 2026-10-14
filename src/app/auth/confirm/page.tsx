@@ -38,11 +38,11 @@ function ConfirmSignIn() {
       return;
     }
 
-    const { accessToken, refreshToken } = await response.json();
+    const { accessToken, refreshToken, needsDisplayName } = await response.json();
     const supabase = getSupabaseBrowserClient();
     await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
 
-    router.push(next);
+    router.push(needsDisplayName ? `/welcome?next=${encodeURIComponent(next)}` : next);
   }
 
   if (!tokenHash || !type) {

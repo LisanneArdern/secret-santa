@@ -9,6 +9,14 @@ function callDelete(accessToken?: string) {
   return accountRoute.DELETE(new Request("http://localhost/api/account", { method: "DELETE", headers }));
 }
 
+function callPatch(body: unknown, accessToken?: string) {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+  return accountRoute.PATCH(
+    new Request("http://localhost/api/account", { method: "PATCH", headers, body: JSON.stringify(body) }),
+  );
+}
+
 describe("DELETE /api/account", () => {
   it("rejects an unauthenticated request", async () => {
     const response = await callDelete();
@@ -52,5 +60,56 @@ describe("DELETE /api/account", () => {
 
     const allowed = await callDelete(user.accessToken);
     expect(allowed.status).toBe(200);
+  });
+});
+
+describe("PATCH /api/account", () => {
+  it("rejects an unauthenticated request", async () => {
+    const response = await callPatch({ display_name: "Bob" });
+    expect(response.status).toBe(401);
+  });
+
+  it("sets the caller's own display name", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+
+    const response = await callPatch({ display_name: "  Bob  " }, user.accessToken);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.displayName).toBe("Bob");
+
+    const { data } = await admin.from("users").select("display_name").eq("id", user.userId).single();
+    expect(data?.display_name).toBe("Bob");
+  });
+
+  it("rejects an empty name", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+
+    const response = await callPatch({ display_name: "   " }, user.accessToken);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBe("empty");
+  });
+
+  it("rejects a name over the length limit", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+
+    const response = await callPatch({ display_name: "a".repeat(61) }, user.accessToken);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error).toBe("too_long");
+  });
+
+  it("can never set another user's display name", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+    const other = await createTestUser(admin);
+
+    await callPatch({ display_name: "Mallory" }, user.accessToken);
+
+    const { data } = await admin.from("users").select("display_name").eq("id", other.userId).single();
+    expect(data?.display_name).not.toBe("Mallory");
   });
 });

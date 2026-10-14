@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { MINIMUM_PARTICIPANTS } from "@/domain/draw/draw";
 import { canPerform, type RoundState } from "@/domain/round-lifecycle/state-machine";
-import { performDraw } from "@/lib/draw-orchestration";
+import {
+  claimNextDrawVersion,
+  performDraw,
+  revertDrawVersionClaim,
+  settleDrawVersionClaim,
+  waitForDrawVersionToSettle,
+} from "@/lib/draw-orchestration";
 import { sendDrawCompletionEmails } from "@/lib/email/send-draw-emails";
 import { sendEmailSafely } from "@/lib/email/send-safely";
 import { removedFromRoundEmail } from "@/lib/email/templates";
@@ -30,7 +36,7 @@ export async function DELETE(
   const admin = getSupabaseAdminClient();
   const { data: round, error: roundError } = await admin
     .from("rounds")
-    .select("id, name, organiser_id, state, current_draw_version, wishes_required")
+    .select("id, name, organiser_id, state, wishes_required")
     .eq("id", roundId)
     .maybeSingle();
   if (roundError) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
@@ -99,20 +105,34 @@ export async function DELETE(
   }
 
   // AC-DRAW-09: removing a participant after the draw always triggers a
-  // full redraw for all remaining participants.
-  const nextVersion = (round.current_draw_version ?? 0) + 1;
+  // full redraw for all remaining participants. Shares the explicit
+  // redraw endpoint's atomic claim on current_draw_version (see its
+  // comment) so the two can never race each other into corrupting the
+  // counter. Unlike that endpoint, losing the initial claim here means
+  // waiting for whatever redraw is already in flight to settle and then
+  // claiming a fresh version of our own — removing a participant always
+  // needs its own redraw reflecting the new participant set, never just
+  // an echo of someone else's.
+  let claim = await claimNextDrawVersion(admin, roundId);
+  if (!claim.claimed) {
+    const settledVersion = await waitForDrawVersionToSettle(admin, roundId);
+    if (settledVersion === null) {
+      return NextResponse.json({ error: "redraw_in_progress" }, { status: 503 });
+    }
+    claim = await claimNextDrawVersion(admin, roundId);
+  }
+  if (!claim.claimed) {
+    return NextResponse.json({ error: "redraw_in_progress" }, { status: 503 });
+  }
+
+  const nextVersion = claim.nextVersion!;
   const outcome = await performDraw(admin, round, nextVersion);
   if (outcome.kind !== "drawn") {
+    await revertDrawVersionClaim(admin, roundId, nextVersion - 1);
     return NextResponse.json({ ok: true, redrawn: false, redrawFailed: outcome }, { status: 207 });
   }
 
-  const { error: versionError } = await admin
-    .from("rounds")
-    .update({ current_draw_version: nextVersion })
-    .eq("id", roundId);
-  if (versionError) {
-    return NextResponse.json({ error: "version_update_failed" }, { status: 500 });
-  }
+  await settleDrawVersionClaim(admin, roundId, nextVersion);
 
   await sendDrawCompletionEmails(admin, {
     roundId,

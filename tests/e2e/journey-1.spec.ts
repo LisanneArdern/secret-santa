@@ -15,15 +15,17 @@ test("journey 1 (cut-down): create, invite, join, draw, see only your own giftee
 
   const now = Date.now();
   const organiserEmail = `journey-organiser-${now}@example.com`;
+  const organiserName = "Alice";
   const inviteeEmails = [0, 1, 2].map((i) => `journey-invitee-${i}-${now}@example.com`);
+  const inviteeNames = ["Priya", "Sam", "Jordan"];
   const wishesByInvitee = ["Board games", "Warm socks", "A good book"];
 
   const contexts = [await browser.newContext()];
   const organiserPage = await contexts[0].newPage();
 
-  await test.step("organiser signs in and creates a round", async () => {
+  await test.step("organiser signs in (setting their name for the first time) and creates a round", async () => {
     await organiserPage.goto("/sign-in");
-    await signIn(organiserPage, organiserEmail);
+    await signIn(organiserPage, organiserEmail, organiserName);
 
     await organiserPage.goto("/rounds/new");
     const createRoundA11y = await new AxeBuilder({ page: organiserPage }).analyze();
@@ -79,7 +81,7 @@ test("journey 1 (cut-down): create, invite, join, draw, see only your own giftee
 
       await page.getByRole("button", { name: "Sign in to join" }).click();
       await page.waitForURL(/\/sign-in/);
-      await signIn(page, email);
+      await signIn(page, email, inviteeNames[i]);
 
       await page.getByRole("button", { name: "Join round" }).click();
       await expect(page.getByText("You're in!")).toBeVisible();
@@ -97,7 +99,7 @@ test("journey 1 (cut-down): create, invite, join, draw, see only your own giftee
     await expect(organiserPage.getByText("Names have been drawn.")).toBeVisible();
   });
 
-  await test.step("each of the 4 people sees only their own giftee's wishes", async () => {
+  await test.step("each of the 4 people sees only their own giftee's wishes, by their giftee's real name", async () => {
     const seenWishes: string[] = [];
 
     for (const page of [organiserPage, ...inviteePages]) {
@@ -105,6 +107,11 @@ test("journey 1 (cut-down): create, invite, join, draw, see only your own giftee
       await expect(page.getByRole("heading", { name: "My giftee" })).toBeVisible();
       const body = (await page.textContent("body")) ?? "";
       seenWishes.push(wishesByInvitee.find((w) => body.includes(w)) ?? "(none)");
+      // Everyone set a display name during sign-in (via /welcome), so the
+      // reveal should always show a real name — never the generic
+      // fallback used when nobody ever set one.
+      expect(body).not.toContain("your giftee");
+      expect([organiserName, ...inviteeNames].some((name) => body.includes(name))).toBe(true);
     }
 
     // A perfect matching: all 4 giftees distinct, and no invitee drew

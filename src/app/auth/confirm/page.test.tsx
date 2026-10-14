@@ -67,6 +67,25 @@ describe("ConfirmPage", () => {
     expect(push).toHaveBeenCalledWith("/my-rounds");
   });
 
+  it("redirects to /welcome, carrying `next` along, for a first-time user with no display name yet", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+        userId: "user-1",
+        email: "alice@example.com",
+        needsDisplayName: true,
+      }),
+    });
+    const user = userEvent.setup();
+    render(<ConfirmPage />);
+
+    await user.click(screen.getByRole("button", { name: "Confirm sign-in" }));
+
+    expect(push).toHaveBeenCalledWith("/welcome?next=%2Fmy-rounds");
+  });
+
   it("shows a plain-language error if the token is invalid or already used", async () => {
     fetchMock.mockResolvedValue({ ok: false });
     const user = userEvent.setup();

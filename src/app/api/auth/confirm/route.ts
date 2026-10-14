@@ -1,5 +1,6 @@
 import { createClient, type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 // Deliberately exports only POST, no GET: the magic-link email (see
 // supabase/templates/magic_link.html) points at a page carrying
@@ -38,10 +39,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_or_expired_token" }, { status: 401 });
   }
 
+  // Magic-link sign-in never collects a display name, so this is the one
+  // signal that sends a first-time user through the one-time /welcome
+  // step before continuing wherever they were headed.
+  const admin = getSupabaseAdminClient();
+  const { data: profile } = await admin
+    .from("users")
+    .select("display_name")
+    .eq("id", data.session.user.id)
+    .maybeSingle();
+
   return NextResponse.json({
     accessToken: data.session.access_token,
     refreshToken: data.session.refresh_token,
     userId: data.session.user.id,
     email: data.session.user.email,
+    needsDisplayName: !profile?.display_name,
   });
 }

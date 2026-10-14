@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
@@ -210,6 +211,16 @@ function RoundPageContent() {
           </div>
         </dl>
       </section>
+
+      {round.state === "drawn" && (
+        <section>
+          <h2>Your giftee</h2>
+          <p>Names have been drawn — see who you&apos;re buying for.</p>
+          <Link href={`/rounds/${roundId}/giftee`} className="btn-secondary">
+            My giftee
+          </Link>
+        </section>
+      )}
 
       {isOrganiser && (
         <>

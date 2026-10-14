@@ -34,6 +34,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: dateCheck.reason }, { status: 400 });
   }
 
+  const organiserParticipates =
+    typeof body.organiser_participates === "boolean" ? body.organiser_participates : true;
+
   const admin = getSupabaseAdminClient();
   const { data: round, error } = await admin
     .from("rounds")
@@ -46,8 +49,7 @@ export async function POST(request: Request) {
       wishes_required: Boolean(body.wishes_required),
       exchange_date: exchangeDate ? exchangeDate.toISOString() : null,
       exchange_place: typeof body.exchange_place === "string" ? body.exchange_place : null,
-      organiser_participates:
-        typeof body.organiser_participates === "boolean" ? body.organiser_participates : true,
+      organiser_participates: organiserParticipates,
       state: "open",
     })
     .select()
@@ -55,6 +57,18 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: "create_failed" }, { status: 500 });
+  }
+
+  // An organiser who opts to participate needs an actual participant row
+  // to be eligible for the draw itself — ticking the checkbox isn't just
+  // a visibility setting.
+  if (organiserParticipates) {
+    const { error: participantError } = await admin
+      .from("participants")
+      .insert({ round_id: round.id, user_id: user.id });
+    if (participantError) {
+      return NextResponse.json({ error: "create_failed" }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ round }, { status: 201 });

@@ -72,7 +72,8 @@ button {
 
 /* SPEC.md: "Tap targets are at least 44 by 44px." */
 button,
-a.button,
+a.btn-primary,
+a.btn-secondary,
 input,
 select {
   min-height: var(--tap-target-min);
@@ -229,6 +230,7 @@ legend {
   border: none;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -303,4 +305,27 @@ legend {
   font-weight: 600;
   background: var(--color-highlight);
   color: var(--color-primary-dark);
+}
+
+/* SPEC.md: "an optional reveal animation when a participant first opens
+   their giftee" — respects prefers-reduced-motion via the global rule
+   above, which zeroes every animation-duration. */
+.reveal {
+  animation: reveal-in 0.4s ease-out;
+}
+
+.reveal .reveal-icon {
+  font-size: 2rem;
+  text-align: center;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

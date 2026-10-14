@@ -75,6 +75,48 @@ describe("POST /api/rounds", () => {
     const { data: dbRound } = await admin.from("rounds").select("*").eq("id", body.round.id).single();
     expect(dbRound?.organiser_id).toBe(user.userId);
   });
+
+  it("adds the organiser as a participant when organiser_participates is true", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+    const response = await callCreate(
+      {
+        name: "Family Christmas",
+        signup_deadline: new Date(Date.now() + 86_400_000).toISOString(),
+        organiser_participates: true,
+      },
+      user.accessToken,
+    );
+    const body = await response.json();
+
+    const { data: participant } = await admin
+      .from("participants")
+      .select("*")
+      .eq("round_id", body.round.id)
+      .eq("user_id", user.userId)
+      .maybeSingle();
+    expect(participant).not.toBeNull();
+  });
+
+  it("does not add the organiser as a participant when organiser_participates is false", async () => {
+    const admin = createAdminClient();
+    const user = await createTestUser(admin);
+    const response = await callCreate(
+      {
+        name: "Family Christmas",
+        signup_deadline: new Date(Date.now() + 86_400_000).toISOString(),
+        organiser_participates: false,
+      },
+      user.accessToken,
+    );
+    const body = await response.json();
+
+    const { data: participants } = await admin
+      .from("participants")
+      .select("*")
+      .eq("round_id", body.round.id);
+    expect(participants).toHaveLength(0);
+  });
 });
 
 describe("GET /api/rounds/[id]", () => {

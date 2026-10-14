@@ -187,16 +187,27 @@ legend {
   font-weight: 600;
 }
 
-.field input {
-  padding: 0 12px;
+.field input,
+.field textarea {
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-surface);
   color: var(--color-text);
+  font-family: inherit;
   font-size: inherit;
 }
 
-.field input:focus-visible {
+.field input {
+  padding-block: 0;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }

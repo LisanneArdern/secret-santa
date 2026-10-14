@@ -38,7 +38,7 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 | AC-INV-05 | Only the organiser can create, edit or delete exclusions. | `exclusions-rls.test.ts` "[AC-INV-05] a participant cannot create, read, or delete an exclusion" |
 | AC-INV-06 | The organiser can remove any participant until the round is completed; the removed person is notified. | RLS: `participants_update` policy (`20261013220000_phase3_participant_removal_window.sql`) — "removed person is notified" closes in Phase 6 (email) |
 | AC-EDGE-01 | Inviting an already invited email, or joining a round twice, never creates a duplicate participant. | `invitations-accept.test.ts` "[AC-EDGE-01] accepting the same invite twice doesn't create a duplicate participant"; `round-invitations.test.ts` "[AC-EDGE] rejects a second invite to an already-invited email" |
-| AC-EDGE-09 | Fetching a magic link URL without pressing confirm does not use up the token. | `auth-confirm.test.ts` "[AC-EDGE-09] exports no GET handler, so a plain link open can never consume the token" — full HTTP-level proof lands with Phase 8's e2e journeys once the confirm page (Phase 5) exists |
+| AC-EDGE-09 | Fetching a magic link URL without pressing confirm does not use up the token. | `auth-confirm.test.ts` "[AC-EDGE-09] exports no GET handler, so a plain link open can never consume the token"; `journey-1.spec.ts` drives the real confirm page end to end (opens the link, then presses the button) |
 | AC-EDGE-10 | An organiser with an open or drawn round cannot delete their account. | `account-deletion.test.ts` "[AC-EDGE-10] blocks deletion while organising an open round"; "...a drawn round, allows it once cancelled"; `validate-deletion.test.ts` |
 
 ## Phase 4 — API routes for round lifecycle & participation
@@ -57,7 +57,7 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 
 | ID | Criterion | Test(s) |
 | --- | --- | --- |
-| AC-EDGE-04 | HTML in wishes is rendered as text, never executed. | |
+| AC-EDGE-04 | HTML in wishes is rendered as text, never executed. | `giftee/page.test.tsx` "[AC-EDGE-04] renders HTML in wishes as literal text, never executed" |
 
 ## Phase 6 — Notifications (Resend)
 
@@ -77,3 +77,5 @@ One row per acceptance-criterion ID from `SPEC.md`. Each ID is owned by exactly 
 ## Phase 8 — E2E journeys, accessibility, CI hardening
 
 No criterion is solely owned here — this phase verifies the 5 end-to-end journeys and accessibility across all screens, and confirms every row above has a linked test before v1 is considered done.
+
+`journey-1.spec.ts` ("Playwright journey 1 (cut-down) + axe", first milestone PR 10) covers the cut-down version of journey 1: organiser creates a round, invites 3 people by email, all join and add wishes, organiser draws, each person sees only their own giftee. It's an end-to-end rerun of several already-closed criteria against the real app (AC-DRAW-01/02/03, AC-INV-01/03, AC-EDGE-01/04/09, AC-PRIV-01/03) plus axe scans of the signed-in create-round form, the invite page, the organiser's round page, and the My giftee page. The remaining 4 journeys, and this journey's deferred parts (automatic draw, redraw-on-removal, reminders, archival, wishes-required gating, link invites, bounce handling), are still open.

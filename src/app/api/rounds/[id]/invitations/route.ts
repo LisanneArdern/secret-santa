@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { sendEmailSafely } from "@/lib/email/send-safely";
+import { baseUrl, invitedEmail } from "@/lib/email/templates";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getAuthenticatedUser, getRequestScopedSupabaseClient } from "@/lib/supabase-request-client";
 
@@ -52,7 +54,7 @@ export async function POST(
   const admin = getSupabaseAdminClient();
   const { data: round, error: roundError } = await admin
     .from("rounds")
-    .select("id, organiser_id, state, signup_deadline")
+    .select("id, name, organiser_id, state, signup_deadline")
     .eq("id", roundId)
     .maybeSingle();
   if (roundError) return NextResponse.json({ error: "lookup_failed" }, { status: 500 });
@@ -90,6 +92,26 @@ export async function POST(
 
   if (error) {
     return NextResponse.json({ error: "create_failed" }, { status: 500 });
+  }
+
+  // SPEC.md Notifications: "Invited to a round | Invitee". Link invites
+  // have no bound address, so there's no one to email — sharing the link
+  // is the organiser's job.
+  if (email) {
+    const { data: organiserUser } = await admin
+      .from("users")
+      .select("display_name, email")
+      .eq("id", round.organiser_id)
+      .maybeSingle();
+
+    await sendEmailSafely({
+      to: email,
+      ...invitedEmail({
+        roundName: round.name,
+        organiserName: organiserUser?.display_name ?? organiserUser?.email ?? "Someone",
+        inviteUrl: `${baseUrl()}/invite/${invitation.token}`,
+      }),
+    });
   }
 
   return NextResponse.json({ invitation }, { status: 201 });

@@ -34,6 +34,7 @@ export default defineConfig({
           name: "integration",
           environment: "node",
           include: ["tests/integration/**/*.{test,spec}.ts"],
+          setupFiles: ["./tests/setup/integration.ts"],
           // These hit one shared local Postgres/GoTrue instance; running
           // every file in its own parallel worker occasionally starved the
           // concurrency-sensitive draw/redraw tests under load. Integration
